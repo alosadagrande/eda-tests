@@ -1,5 +1,7 @@
-TOPIC: event
+TOPIC: gh-status.local-cluster
 CAFILE_PATH: "ca.crt"
 CERTFILE_PATH: "client.crt"
 KEYFILE_PATH: "client.key"
-HOST: "kafka-kafka-tls-bootstrap-multicluster-global-hub.apps.inbound-int.se-lab.eng.rdu2.dc.redhat.com"
+HOST: "kafka-kafka-tls-bootstrap-multicluster-global-hub.apps.hub0.inbound-int.se-lab.eng.rdu2.dc.redhat.com"
+# test
+CLUSTER: "sno-worker-01"
