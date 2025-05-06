@@ -3,5 +3,5 @@
   tasks:
     - community.general.slack:
         token: "{{ slack_token }}"
-        msg: "Event received: {{ ansible_eda.event.body }}"
+        msg: "A new TALM event is received. The CGU {{ ansible_eda.event.body[0].cguName }} attached to the {{ ansible_eda.event.body[0].leafHubName }} reports status {{ ansible_eda.event.body[0].reason }} with the following message {{ ansible_eda.event.body[0].message }}."
         channel: '#infra-notifications'
