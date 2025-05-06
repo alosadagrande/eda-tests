@@ -3,5 +3,5 @@
   tasks:
     - community.general.slack:
         token: "{{ slack_token }}"
-        msg: "test of a infra notification {{ ansible.eda.event.body }}"
+        msg: "Event received: {{ ansible_eda.event.body }}"
         channel: '#infra-notifications'

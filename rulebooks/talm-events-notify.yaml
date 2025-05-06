@@ -13,10 +13,12 @@
   rules:
     - name: Notify
       condition: event.body is defined
-      action:
-        debug:
-          msg: "Printing '{{ event }}'"
+      actions:
+        - run_job_template:
+            name: "Slack Notification TALM event"
+            organization: Default
+        - debug:
+            msg: "Printing {{ event.body }}"
 #      condition: event.body is selectattr('reason', 'in', 'CguSuccess') and event.body is selectattr('cguName', 'in', "{{ CLUSTER }}") and event.body is selectattr('message', 'in', 'ClusterGroupUpgrade {{ CLUSTER }} succeeded remediating policies')
 #      action:
 #        debug:
-    
