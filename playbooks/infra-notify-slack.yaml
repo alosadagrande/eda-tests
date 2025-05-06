@@ -1,0 +1,7 @@
+- hosts: localhost
+  connection: local
+  tasks:
+    - community.general.slack:
+        token: "{{ slack_token }}"
+        msg: "test of a infra notification {{ ansible.eda.event.body }}"
+        channel: '#infra-notifications'
