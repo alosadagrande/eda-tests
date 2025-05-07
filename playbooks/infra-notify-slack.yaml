@@ -3,5 +3,8 @@
   tasks:
     - community.general.slack:
         token: "{{ slack_token }}"
-        msg: "A new TALM event is received. The CGU {{ ansible_eda.event.body[0].cguName }} attached to the {{ ansible_eda.event.body[0].leafHubName }} reports status {{ ansible_eda.event.body[0].reason }} with the following message {{ ansible_eda.event.body[0].message }}."
+        msg: | 
+          "A new TALM event is received:
+          The CGU policy {{ ansible_eda.event.body[0].cguName }} processed by the {{ ansible_eda.event.body[0].leafHubName }} hub cluster reports status {{ ansible_eda.event.body[0].reason }} with the following message {{ ansible_eda.event.body[0].message }}."
         channel: '#infra-notifications'
+        icon_emoji: ':rotating_light:'
