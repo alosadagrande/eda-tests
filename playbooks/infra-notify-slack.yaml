@@ -5,6 +5,8 @@
       - CguCreated
       - CguStarted
       - CguSuccess
+      - CguTimedout
+      - CguValidationFailure
   tasks:
     - community.general.slack:
         token: "{{ slack_token }}"
