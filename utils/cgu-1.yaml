@@ -1,0 +1,13 @@
+apiVersion: ran.openshift.io/v1alpha1
+kind: ClusterGroupUpgrade
+metadata:
+  name: talm-example-1
+  namespace: talm-policies
+spec:
+  clusters:
+  - sno-worker-01
+  managedPolicies:
+  - talm-example-policy
+  remediationStrategy:
+    maxConcurrency: 1
+    timeout: 240
