@@ -19,6 +19,7 @@
             organization: Default
         - print_event:
             pretty: true
+
 #      condition: event.body is selectattr('reason', 'in', 'CguSuccess') and event.body is selectattr('cguName', 'in', "{{ CLUSTER }}") and event.body is selectattr('message', 'in', 'ClusterGroupUpgrade {{ CLUSTER }} succeeded remediating policies')
 #      action:
 #        debug:
