@@ -1,0 +1,20 @@
+- hosts: localhost
+  connection: local
+  vars:
+    target_reasons:
+      - CguSuccess
+      - CguTimedout
+      - CguValidationFailure
+  tasks:
+    - community.general.slack:
+        token: "{{ slack_token }}"
+        msg: | 
+          "A new TALM event is received at {{ ansible_date_time.iso8601 }}:
+          The CGU policy {{ item.cguName }} processed by the {{ item.leafHubName }} hub cluster reports status {{ item.reason }} with the following message {{ item.message }}."
+        channel: '#infra-notifications'
+        icon_emoji: ':rotating_light:'
+      loop: "{{ ansible_eda.event.body }}"
+      when:
+        - item.reason == "CguSuccess"
+        - item.eventAnnotations['cgu.openshift.io/event-type'] == "global"
+      #when: {{ ansible_eda.event | json_query('body[?reason==`cguSuccess`].message }}

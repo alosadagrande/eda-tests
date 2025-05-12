@@ -1,0 +1,25 @@
+- name: Read messages from a kafka topic from RHACM
+  hosts: all
+  sources:
+    - ansible.eda.kafka:
+        host: "{{ HOST }}"
+        port: 443
+        topic: "{{ TOPIC }}"
+        check_hostname: false
+        cafile: "{{ eda.filename.ca_cert }}"
+        certfile: "{{ eda.filename.client_cert }}"
+        keyfile: "{{ eda.filename.client_key }}"
+        verify_mode: CERT_NONE
+  rules:
+    - name: Notify
+      condition: event.body is selectattr('cguName', 'in', "{{ target_clusters }}")
+      actions:
+        - run_job_template:
+            name: "Deploy App in New Clusters"
+            organization: Default
+        - print_event:
+            pretty: true
+
+#      condition: event.body is selectattr('reason', 'in', 'CguSuccess') and event.body is selectattr('cguName', 'in', "{{ CLUSTER }}") and event.body is selectattr('message', 'in', 'ClusterGroupUpgrade {{ CLUSTER }} succeeded remediating policies')
+#      action:
+#        debug:
