@@ -12,7 +12,7 @@
         verify_mode: CERT_NONE
   rules:
     - name: Notify
-      condition: event.body is selectattr('cguName', 'in', "{{ target_clusters }}")
+      condition: event.body is selectattr('reason', 'match', "Success")
       actions:
         - run_job_template:
             name: "Deploy App in New Clusters"

@@ -1,25 +1,11 @@
 - hosts: localhost
   connection: local
   vars:
-    target_reasons:
-      - CguSuccess
-      - CguTimedout
-      - CguValidationFailure
+    target_clusters:
+      - sno-worker-01
+      - sno-worker-02
+      - 5g-deployment-lab
   tasks:
-    - community.general.slack:
-        token: "{{ slack_token }}"
-        msg: | 
-          "A new TALM event is received at {{ ansible_date_time.iso8601 }}:
-          The configuration stage for cluster {{ item.cguName }} managed by the {{ item.leafHubName }} hub cluster FAILED with status {{ item.reason }} and message {{ item.message }}."
-        channel: '#infra-notifications'
-        icon_emoji: ':rotating_light:'
-      loop: "{{ ansible_eda.event.body }}"
-      when:
-        - item.reason == "CguTimedout" or item.reason == "CguValidationFailure"
-        - item.eventAnnotations['cgu.openshift.io/event-type'] == "global"
-      #when: {{ ansible_eda.event | json_query('body[?reason==`cguSuccess`].message }}
-
-    - block:
       - community.general.slack:
           token: "{{ slack_token }}"
           msg: |
@@ -27,23 +13,50 @@
             The configuration stage for cluster {{ item.cguName }} managed by the {{ item.leafHubName }} hub cluster SUCCEEDED. The cluster is ready to run workloads. Deployment of the emojivote application is started"
           channel: '#infra-notifications'
           icon_emoji: ':rotating_light:'
+        loop: "{{ ansible_eda.event.body }}"
+        when:
+          - item.eventAnnotations['cgu.openshift.io/event-type'] == "global"
+          - item.cguName in target_clusters
+          - item.reason == "CguSuccess"
 
-#      - builtin.set_fact:
-#          ocp_cluster_name: "{{ item.cguName }}"
+#      - name: Create the kubeconfig path
+#        ansible.builtin.set_fact:
+#          kubeconfig_tmp: "{{ 'kube_' + item.cguName | replace('-','_') }}"
+#        loop: "{{ ansible_eda.event.body }}"
+#        when:
+#          - item.eventAnnotations['cgu.openshift.io/event-type'] == "global"
+#          - item.cguName in target_clusters
+#          - item.reason == "CguSuccess"
+#
+#      - name: name of the kubeconfig
+#        ansible.builtin.debug:
+#          var:  kubeconfig_tmp
 
-      - name: Deploy application to the cluster
+      - name: path to the kubeconfig file
+        ansible.builtin.set_fact:
+          kubeconfig: "{{ lookup('ansible.builtin.vars', 'kube_' + item.cguName | replace('-','_')) }}"
+        loop: "{{ ansible_eda.event.body }}"
+        when: 
+          - item.eventAnnotations['cgu.openshift.io/event-type'] == "global"
+          - item.cguName in target_clusters
+          - item.reason == "CguSuccess"
+
+      - name: Debug path to kubeconfig
+        ansible.builtin.debug:
+          var: kubeconfig
+
+      - name: Deploy ns application to the cluster
         kubernetes.core.k8s:
-          kubeconfig: "{{ item.cguName }}"
+          kubeconfig: "{{ kubeconfig }}"
           state: present
-          src: https://raw.githubusercontent.com/BuoyantIO/emojivoto/refs/heads/main/kustomize/deployment/ns.yml
+          api_version: v1
+          kind: Namespace
+          name: alosadatest
+          #src: https://raw.githubusercontent.com/BuoyantIO/emojivoto/refs/heads/main/kustomize/deployment/ns.yml
         register: result
         until: result.failed != true
         retries: 5
-        delay: 60
-      loop: "{{ ansible_eda.event.body }}"
-      when:
-        - item.reason == "Success"
-        - item.eventAnnotations['cgu.openshift.io/event-type'] == "global"
+        delay: 10
 
        
       #when: {{ ansible_eda.event | json_query('body[?reason==`cguSuccess`].message }}
