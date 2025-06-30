@@ -12,7 +12,7 @@
         token: "{{ slack_token }}"
         msg: | 
           "A new TALM event is received at {{ ansible_date_time.iso8601 }}:
-          The CGU policy {{ item.cguName }} processed by the {{ item.leafHubName }} hub cluster reports status {{ item.reason }} with the following message {{ item.message }}."
+          The CGU policy {{ item.cguName }} executed in {{ item.eventAnnotations['cgu.openshift.io/cluster-name'] }} cluster and managed by the {{ item.leafHubName }} hub cluster reports status {{ item.reason }} with the following message {{ item.message }}."
         channel: '#infra-notifications'
         icon_emoji: ':rotating_light:'
       loop: "{{ ansible_eda.event.body }}"
