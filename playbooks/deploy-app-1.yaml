@@ -20,6 +20,23 @@
           - item.eventAnnotations['cgu.openshift.io/event-type'] == "global"
           - item.cguName in target_clusters
           - item.reason == "CguSuccess"
+        register: slack_notification_result # Registramos el resultado del slack para depuración
+
+      - name: Asignar el valor de item.cguName a la variable 'cluster'
+        # Este set_fact se ejecutará por cada elemento del loop anterior que cumplió las condiciones 'when'
+        ansible.builtin.set_fact:
+          cluster: "{{ item.item.cguName }}" # 'item.item' es necesario porque 'slack_notification_result.results'
+                                            # contiene el 'item' original en su propiedad 'item'.
+        loop: "{{ slack_notification_result.results }}" # Iteramos sobre los resultados del task anterior
+        when:
+          - item.item.eventAnnotations['cgu.openshift.io/event-type'] == "global" # Vuelves a aplicar las condiciones si lo necesitas
+          - item.item.cguName in target_clusters
+          - item.item.reason == "CguSuccess"
+
+      - name: Usar la variable 'cluster' (mostrar el último valor asignado)
+        ansible.builtin.debug:
+          msg: "El último cluster procesado exitosamente fue: {{ cluster }}"
+
 
 #      - name: Create the kubeconfig path
 #        ansible.builtin.set_fact:
@@ -39,16 +56,11 @@
           kubeconfig: "{{ kube_local_cluster }}"
           api_version: v1
           kind: Secret
-          name: "{{ item.cguName }}-admin-kubeconfig"
+          name: "{{ cluster }}-admin-kubeconfig"
           #name: "sno-worker-02-admin-kubeconfig"
           #name: "{{ lookup('ansible.builtin.vars', item.cguName + '-admin-kubeconfig') }}"
-          namespace: "sno-worker-02"
+          namespace: "{{ cluster }}"
         register: kubeconfig_secret_info
-        loop: "{{ ansible_eda.event.body }}"
-        when:
-          - item.eventAnnotations['cgu.openshift.io/event-type'] == "global"
-          - item.cguName in target_clusters
-          - item.reason == "CguSuccess"
 
       - name: Mostrar ruta del kubeconfig extraído
         ansible.builtin.debug: 
@@ -56,7 +68,7 @@
 
       - name: Verificar si el Secret existe y contiene el 'kubeconfig'
         ansible.builtin.fail:
-          msg: "El Secret no se encontró o no contiene la clave 'kubeconfig'."
+          msg: "El Secret del cluster {{ cluster }} no se encontró o no contiene la clave 'kubeconfig'."
         when:
           - not kubeconfig_secret_info.resources | default([])
           - not (kubeconfig_secret_info.resources[0].data | default({})).kubeconfig is defined
