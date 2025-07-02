@@ -5,6 +5,8 @@
       - sno-worker-01
       - sno-worker-02
       - 5g-deployment-lab
+    kubeconfig_output_path: "/tmp/kubeconfig-extracted.yaml" # Ruta donde se guardará el kubeconfig
+    deploy_emoji: False
   tasks:
       - community.general.slack:
           token: "{{ slack_token }}"
@@ -33,13 +35,58 @@
 #          var:  kubeconfig_tmp
 
       - name: path to the kubeconfig file
-        ansible.builtin.set_fact:
-          kubeconfig: "{{ lookup('ansible.builtin.vars', 'kube_' + item.cguName | replace('-','_')) }}"
+        kubernetes.core.k8s_info:
+          kubeconfig: "{{ kube_local_cluster }}"
+          api_version: v1
+          kind: Secret
+          name: "{{ item.cguName }}-admin-kubeconfig"
+          #name: "sno-worker-02-admin-kubeconfig"
+          #name: "{{ lookup('ansible.builtin.vars', item.cguName + '-admin-kubeconfig') }}"
+          namespace: "sno-worker-02"
+        register: kubeconfig_secret_info
         loop: "{{ ansible_eda.event.body }}"
-        when: 
+        when:
           - item.eventAnnotations['cgu.openshift.io/event-type'] == "global"
           - item.cguName in target_clusters
           - item.reason == "CguSuccess"
+
+      - name: Mostrar ruta del kubeconfig extraído
+        ansible.builtin.debug: 
+          var: kubeconfig_secret_info
+
+      - name: Verificar si el Secret existe y contiene el 'kubeconfig'
+        ansible.builtin.fail:
+          msg: "El Secret no se encontró o no contiene la clave 'kubeconfig'."
+        when:
+          - not kubeconfig_secret_info.resources | default([])
+          - not (kubeconfig_secret_info.resources[0].data | default({})).kubeconfig is defined
+
+      - name: Decodificar y guardar el kubeconfig en un archivo
+        ansible.builtin.copy:
+          content: "{{ kubeconfig_secret_info.resources[0].data.kubeconfig | b64decode }}"
+          dest: "{{ kubeconfig_output_path }}"
+          mode: '0600' # Permisos restrictivos para el archivo kubeconfig
+        no_log: true # Evita que el contenido del kubeconfig se imprima en la salida del log
+        when: (kubeconfig_secret_info.resources[0].data | default({})).kubeconfig is defined
+
+      - name: Mostrar ruta del kubeconfig extraído
+        ansible.builtin.debug:
+          msg: "El kubeconfig se ha extraído y guardado en: {{ kubeconfig_output_path }}"
+        when: (kubeconfig_secret_info.resources[0].data | default({})).kubeconfig is defined
+
+      - name: Set KUBECONFIG environment variable
+        set_fact:
+          kubeconfig: "{{ kubeconfig_output_path }}"
+
+#- name: path to the kubeconfig file
+#        ansible.builtin.set_fact:
+#          #kubeconfig: "{{ lookup('ansible.builtin.vars', 'kube_' + item.cguName | replace('-','_')) }}"
+#          kubeconfig: "{{ kube_local_cluster }}"
+#        loop: "{{ ansible_eda.event.body }}"
+#        when: 
+#          - item.eventAnnotations['cgu.openshift.io/event-type'] == "global"
+#          - item.cguName in target_clusters
+#          - item.reason == "CguSuccess"
 
       - name: Debug path to kubeconfig
         ansible.builtin.debug:
