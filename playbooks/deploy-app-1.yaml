@@ -1,10 +1,6 @@
 - hosts: localhost
   connection: local
   vars:
-    target_clusters:
-      - sno-worker-01
-      - sno-worker-02
-      - 5g-deployment-lab
     kubeconfig_output_path: "/tmp/kubeconfig-extracted.yaml" # Ruta donde se guardará el kubeconfig
     deploy_emoji: False
   tasks:
@@ -13,5 +9,7 @@
         loop: "{{ ansible_eda.event.body }}"
         when:
           - item.eventAnnotations['cgu.openshift.io/event-type'] == "global"
-          - item.cguName in target_clusters
+          - item.eventAnnotations is defined # Asegura que el diccionario exista
+          #- (item.eventAnnotations['cgu.openshift.io/cluster-name'] is defined and item.eventAnnotations['cgu.openshift.io/cluster-name'] == item.cguName) # Asegura que la clave exista y compara
+          - item.eventAnnotations['cgu.openshift.io/cluster-name'] is defined
           - item.reason == "CguSuccess"
