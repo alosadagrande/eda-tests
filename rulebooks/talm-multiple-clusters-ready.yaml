@@ -24,7 +24,7 @@
       condition: event.body is selectattr('reason', 'match', 'Success') and event.body is selectattr('reportingController', 'match', 'ClusterGroupUpgrade')
       actions:
         - run_job_template:
-            name: "Deploy App in New Clusters"
+            name: "Connect multiple spread deployed clusters"
             organization: Default
         - print_event:
             pretty: true
