@@ -1,0 +1,30 @@
+- name: Read messages from a kafka topic from RHACM
+  hosts: all
+  sources:
+    - ansible.eda.kafka:
+        host: "{{ HOST }}"
+        port: 443
+        topic: gh-status.cnf77
+        check_hostname: false
+        cafile: "{{ eda.filename.ca_cert }}"
+        certfile: "{{ eda.filename.client_cert }}"
+        keyfile: "{{ eda.filename.client_key }}"
+        verify_mode: CERT_NONE
+    - ansible.eda.kafka:
+        host: "{{ HOST }}"
+        port: 443
+        topic: "{{ TOPIC }}"
+        check_hostname: false
+        cafile: "{{ eda.filename.ca_cert }}"
+        certfile: "{{ eda.filename.client_cert }}"
+        keyfile: "{{ eda.filename.client_key }}"
+        verify_mode: CERT_NONE
+  rules:
+    - name: Notify
+      condition: event.body is selectattr('reason', 'match', 'Success') and event.body is selectattr('reportingController', 'match', 'ClusterGroupUpgrade')
+      actions:
+        - run_job_template:
+            name: "Deploy App in New Clusters"
+            organization: Default
+        - print_event:
+            pretty: true
