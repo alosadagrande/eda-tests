@@ -46,7 +46,7 @@ spec:
               namespace: openshift-marketplace
             spec:
               displayName: default-cat-source
-              image: registry.redhat.io/redhat/redhat-operator-index:v4.18
+              image: registry.redhat.io/redhat/redhat-operator-index:v4.19
               publisher: Red Hat
               sourceType: grpc
               updateStrategy:
@@ -87,7 +87,7 @@ spec:
     - key: common
       operator: In
       values:
-      - ocp418
+      - ocp419
 ---
 apiVersion: policy.open-cluster-management.io/v1
 kind: PlacementBinding
