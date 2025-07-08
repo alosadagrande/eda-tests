@@ -8,8 +8,8 @@
         ansible.builtin.include_tasks: process_kubeconfig.yaml # Reference the new file
         loop: "{{ ansible_eda.event.body }}"
         when:
-          - item.eventAnnotations['cgu.openshift.io/event-type'] == "global"
+          - item.eventAnnotations['cgu.openshift.io/event-type'] == "cluster"
           - item.eventAnnotations is defined # Asegura que el diccionario exista
-          #- (item.eventAnnotations['cgu.openshift.io/cluster-name'] is defined and item.eventAnnotations['cgu.openshift.io/cluster-name'] == item.cguName) # Asegura que la clave exista y compara
           - item.eventAnnotations['cgu.openshift.io/cluster-name'] is defined
+          - item.eventAnnotations['cgu.openshift.io/cluster-name'] == item.cguName) # Asegura que la clave exista y compara
           - item.reason == "CguSuccess"
