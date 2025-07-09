@@ -5,7 +5,7 @@
     managedsa: automation
   tasks:
       - name: Process every result and extract the kubeconfig # This task's name for the include
-        ansible.builtin.include_tasks: get_managedsa_token.yaml # Reference the new file
+        ansible.builtin.include_tasks: tasks/get_managedsa_token.yaml # Reference the new file
         loop: "{{ ansible_eda.event.body }}"
         when:
           - item.eventAnnotations['cgu.openshift.io/event-type'] == "cluster"
