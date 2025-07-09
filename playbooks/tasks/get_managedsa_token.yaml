@@ -175,7 +175,7 @@
     when: item.leafHubName != "local-cluster"
 
   - name: Deploy the emojivoto app
-      ansible.builtin.include_tasks: deploy_emojivoto.yaml # Reference the new file
+    ansible.builtin.include_tasks: deploy_emojivoto_managedsa.yaml # Reference the new file
     when:
       - cluster_token is defined
       - cluster_api is defined
