@@ -21,8 +21,7 @@
 
       - name: path to the managedsa token file
         kubernetes.core.k8s_info:
-          kubeconfig: "{{ lookup('ansible.builtin.vars', 'kube_hub_' + hub_cluster) }}"
-          #kubeconfig: "{{ kube_local_cluster }}"
+          kubeconfig: "{{ kubeconfig_file }}"
           api_version: v1
           kind: Secret
           name: "{{ managedsa }}"
@@ -48,7 +47,7 @@
 
       - name: Obtain cluster API via ManagedCluster
         kubernetes.core.k8s_info:
-          kubeconfig: "{{ lookup('ansible.builtin.vars', 'kube_hub_' + hub_cluster) }}"
+          kubeconfig: "{{ kubeconfig_file }}"
           api_version: cluster.open-cluster-management.io/v1
           kind: ManagedCluster
           name: "{{ cluster }}"
@@ -74,7 +73,7 @@
 
       - name: path to the leaf hub managedsa token file
         kubernetes.core.k8s_info:
-          kubeconfig: "{{ lookup('ansible.builtin.vars', 'kube_hub_local_cluster') }}"
+          kubeconfig: "{{ kubeconfig_file }}"
           api_version: v1
           kind: Secret
           name: "{{ managedsa }}"
@@ -100,7 +99,7 @@
 
       - name: Obtain cluster leaf hub API via ManagedCluster
         kubernetes.core.k8s_info:
-          kubeconfig: "{{ lookup('ansible.builtin.vars', 'kube_hub_local_cluster') }}"
+          kubeconfig: "{{ kubeconfig_file }}"
           api_version: cluster.open-cluster-management.io/v1
           kind: ManagedCluster
           name: "{{ leaf_hub_cluster }}"
