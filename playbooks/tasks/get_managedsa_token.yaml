@@ -174,7 +174,7 @@
     when: item.leafHubName != "local-cluster"
 
   - name: Create the credential in the secret store
-    ansible.builtin.include_tasks: create_credential_token.yaml # Reference the new file
+    ansible.builtin.include_tasks: create_aap_credential_token.yaml # Reference the new file
     when:
       - cluster_token is defined
       - cluster_api is defined

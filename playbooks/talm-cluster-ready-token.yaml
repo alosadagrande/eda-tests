@@ -3,9 +3,10 @@
   vars:
     kubeconfig_output_path: "/tmp/kubeconfig-extracted.yaml" # Path where the target cluster kubeconfig will be saved
     kubeconfig_file: "{{ ansible_env.HOME }}/.kube/config" # Default kubeconfig file path
+    managedsa: automation # ManagedSA name to be used to obtain the token
   tasks:
-      - name: Process every result and extract the kubeconfig # This task's name for the include
-        ansible.builtin.include_tasks: tasks/extract_cluster_kubeconfig.yaml # Reference the new file
+      - name: Process every result and extract the managedsa token
+        ansible.builtin.include_tasks: tasks/extract_cluster_token.yaml
         loop: "{{ ansible_eda.event.body }}"
         when:
           - item.eventAnnotations['cgu.openshift.io/event-type'] == "cluster"
