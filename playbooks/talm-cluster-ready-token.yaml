@@ -1,9 +1,13 @@
 - hosts: localhost
   connection: local
   vars:
-    kubeconfig_output_path: "/tmp/kubeconfig-extracted.yaml" # Path where the target cluster kubeconfig will be saved
-    kubeconfig_file: "{{ ansible_env.HOME }}/.kube/config" # Default kubeconfig file path
-    managedsa: automation # ManagedSA name to be used to obtain the token
+    # Configuration variables
+    kubeconfig_output_path: "{{ ansible_env.HOME }}/.tmp/kubeconfig-extracted.yaml"
+    kubeconfig_file: "{{ ansible_env.HOME }}/.kube/config"
+    managedsa: "{{ managedsa_name | default('automation') }}"
+    # AAP Configuration (can be overridden)
+    aap_organization: "{{ aap_org | default('Default') }}"
+    aap_credential_type: "OpenShift or Kubernetes API Bearer Token"  
   tasks:
       - name: Process every result and extract the managedsa token
         ansible.builtin.include_tasks: tasks/extract_cluster_token.yaml
