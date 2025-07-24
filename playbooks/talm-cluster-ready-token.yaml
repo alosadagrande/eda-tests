@@ -7,14 +7,14 @@
     managedsa: "{{ managedsa_name | default('automation') }}"
     # AAP Configuration (can be overridden)
     aap_organization: "{{ aap_org | default('Default') }}"
-    aap_credential_type: "OpenShift or Kubernetes API Bearer Token"  
+    aap_credential_type: "OpenShift or Kubernetes API Bearer Token"
   tasks:
-      - name: Process every result and extract the managedsa token
-        ansible.builtin.include_tasks: tasks/extract_cluster_token_optimized.yaml
-        loop: "{{ ansible_eda.event.body }}"
-        when:
-          - item.eventAnnotations['cgu.openshift.io/event-type'] == "cluster"
-          - item.eventAnnotations is defined # Verifies that the dictionary exists
-          - item.eventAnnotations['cgu.openshift.io/cluster-name'] == item.cguName # Verifies that the key exists and compares
-          - item.eventAnnotations['cgu.openshift.io/cluster-name'] is defined
-          - item.reason == "CguSuccess"
+    - name: Process every result and extract the managedsa token
+      ansible.builtin.include_tasks: tasks/process_cluster_events_token.yaml
+      loop: "{{ ansible_eda.event.body }}"
+      when:
+        - item.eventAnnotations['cgu.openshift.io/event-type'] == "cluster"
+        - item.eventAnnotations is defined # Verifies that the dictionary exists
+        - item.eventAnnotations['cgu.openshift.io/cluster-name'] == item.cguName # Verifies that the key exists and compares
+        - item.eventAnnotations['cgu.openshift.io/cluster-name'] is defined
+        - item.reason == "CguSuccess"

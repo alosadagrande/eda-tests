@@ -140,7 +140,7 @@
 
           - name: Create or update the credential for the Leaf hub cluster in the secret store
             # Store Bearer token and cluster API as credentials. 
-            ansible.builtin.include_tasks: create_aap_credential_token.yaml # Secret store is AAP.
+            ansible.builtin.include_tasks: store_aap_credentials_token.yaml # Secret store is AAP.
             when:
               - cred_cluster_token is defined
               - cred_cluster_api is defined
@@ -217,7 +217,7 @@
 
       - name: Create or update the credential for the Leaf hub cluster in the secret store
         # Store Bearer token and cluster API as credentials. 
-        ansible.builtin.include_tasks: create_aap_credential_token.yaml # Secret store is AAP.
+        ansible.builtin.include_tasks: store_aap_credentials_token.yaml # Secret store is AAP.
         when:
           - cred_cluster_token is defined
           - cred_cluster_api is defined

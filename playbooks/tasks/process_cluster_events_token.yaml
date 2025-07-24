@@ -17,7 +17,7 @@
 - name: Get credentials from global hub
   block:
     - name: Get cluster credentials from global hub
-      ansible.builtin.include_tasks: get_cluster_credentials.yaml
+      ansible.builtin.include_tasks: get_cluster_credentials_token.yaml
       vars:
         cluster_name: "{{ cluster }}"
         
@@ -32,7 +32,7 @@
 - name: Get credentials from leaf hub
   block:
     - name: Get leaf hub credentials first
-      ansible.builtin.include_tasks: get_cluster_credentials.yaml
+      ansible.builtin.include_tasks: get_cluster_credentials_token.yaml
       vars:
         cluster_name: "{{ item.leafHubName }}"
         
@@ -42,14 +42,14 @@
         leaf_hub_api: "{{ extracted_api }}"
         
     - name: Create credential for leaf hub
-      ansible.builtin.include_tasks: create_aap_credential_token.yaml
+      ansible.builtin.include_tasks: store_aap_credentials_token.yaml
       vars:
         cred_cluster_name: "{{ item.leafHubName }}"
         cred_cluster_token: "{{ leaf_hub_token }}"
         cred_cluster_api: "{{ leaf_hub_api }}"
         
     - name: Get target cluster credentials via leaf hub
-      ansible.builtin.include_tasks: get_cluster_credentials.yaml
+      ansible.builtin.include_tasks: get_cluster_credentials_token.yaml
       vars:
         cluster_name: "{{ cluster }}"
         hub_token: "{{ leaf_hub_token }}"
@@ -64,7 +64,7 @@
 
 # Common final tasks
 - name: Create cluster credential in AAP
-  ansible.builtin.include_tasks: create_aap_credential_token.yaml
+  ansible.builtin.include_tasks: store_aap_credentials_token.yaml
   vars:
     cred_cluster_name: "{{ cluster }}"
     cred_cluster_token: "{{ cluster_token }}"
