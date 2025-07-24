@@ -10,7 +10,7 @@
     aap_credential_type: "OpenShift or Kubernetes API Bearer Token"  
   tasks:
       - name: Process every result and extract the managedsa token
-        ansible.builtin.include_tasks: tasks/extract_cluster_token.yaml
+        ansible.builtin.include_tasks: tasks/extract_cluster_token_optimized.yaml
         loop: "{{ ansible_eda.event.body }}"
         when:
           - item.eventAnnotations['cgu.openshift.io/event-type'] == "cluster"

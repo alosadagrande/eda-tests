@@ -1,0 +1,80 @@
+# Optimized version - extracts cluster tokens using modular approach
+# Reduces code duplication and improves maintainability
+
+- name: Log cluster provisioning success
+  ansible.builtin.debug:
+    msg: |
+      TALM event received at {{ ansible_date_time.iso8601 }}:
+      Cluster {{ item.cguName }} managed by {{ item.leafHubName }} hub SUCCEEDED.
+      Cluster is ready for workloads.
+
+- name: Set cluster name
+  ansible.builtin.set_fact:
+    cluster: "{{ item.cguName }}"
+    is_global_hub: "{{ item.leafHubName == 'local-cluster' }}"
+
+# Handle Global Hub scenario
+- name: Get credentials from global hub
+  block:
+    - name: Get cluster credentials from global hub
+      ansible.builtin.include_tasks: get_cluster_credentials.yaml
+      vars:
+        cluster_name: "{{ cluster }}"
+        
+    - name: Set cluster credentials
+      ansible.builtin.set_fact:
+        cluster_token: "{{ extracted_token }}"
+        cluster_api: "{{ extracted_api }}"
+        
+  when: is_global_hub | bool
+
+# Handle Leaf Hub scenario  
+- name: Get credentials from leaf hub
+  block:
+    - name: Get leaf hub credentials first
+      ansible.builtin.include_tasks: get_cluster_credentials.yaml
+      vars:
+        cluster_name: "{{ item.leafHubName }}"
+        
+    - name: Set leaf hub credentials
+      ansible.builtin.set_fact:
+        leaf_hub_token: "{{ extracted_token }}"
+        leaf_hub_api: "{{ extracted_api }}"
+        
+    - name: Create credential for leaf hub
+      ansible.builtin.include_tasks: create_aap_credential_token.yaml
+      vars:
+        cred_cluster_name: "{{ item.leafHubName }}"
+        cred_cluster_token: "{{ leaf_hub_token }}"
+        cred_cluster_api: "{{ leaf_hub_api }}"
+        
+    - name: Get target cluster credentials via leaf hub
+      ansible.builtin.include_tasks: get_cluster_credentials.yaml
+      vars:
+        cluster_name: "{{ cluster }}"
+        hub_token: "{{ leaf_hub_token }}"
+        hub_api: "{{ leaf_hub_api }}"
+        
+    - name: Set cluster credentials
+      ansible.builtin.set_fact:
+        cluster_token: "{{ extracted_token }}"
+        cluster_api: "{{ extracted_api }}"
+        
+  when: not (is_global_hub | bool)
+
+# Common final tasks
+- name: Create cluster credential in AAP
+  ansible.builtin.include_tasks: create_aap_credential_token.yaml
+  vars:
+    cred_cluster_name: "{{ cluster }}"
+    cred_cluster_token: "{{ cluster_token }}"
+    cred_cluster_api: "{{ cluster_api }}"
+  when:
+    - cluster_token is defined
+    - cluster_api is defined
+
+- name: Deploy emojivoto application
+  ansible.builtin.include_tasks: deploy_emojivoto_managedsa.yaml
+  when:
+    - cluster_token is defined
+    - cluster_api is defined 
