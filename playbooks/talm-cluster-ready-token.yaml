@@ -1,3 +1,7 @@
+# This playbook is executed when a cluster is ready.
+# It extracts the token from the cluster and store it in the secret store.
+# It also deploys the emojivoto application to the cluster as action.
+# It handles both global hub and leaf hub scenarios.
 - hosts: localhost
   connection: local
   vars:

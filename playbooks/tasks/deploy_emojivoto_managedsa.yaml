@@ -1,5 +1,5 @@
-# This file contains tasks to deploy the emojivoto application.
-# It assumes we already obtained the credentials of the cluster where the app is deployed.
+# This file is used to deploy the emojivoto application to the cluster.
+# It uses the token and API to authenticate to the cluster.
 
   - name: Deploy ns application to the cluster
     kubernetes.core.k8s:
