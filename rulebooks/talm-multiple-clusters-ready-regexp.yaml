@@ -4,7 +4,7 @@
     - ansible.eda.kafka:
         host: "{{ HOST }}"
         port: 443
-        topics: "{{ TOPICS }}"
+        topic_pattern: "{{ TOPIC_PATTERN }}"
         check_hostname: false
         cafile: "{{ eda.filename.ca_cert }}"
         certfile: "{{ eda.filename.client_cert }}"
