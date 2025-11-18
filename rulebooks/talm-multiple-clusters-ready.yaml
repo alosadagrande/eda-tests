@@ -1,5 +1,6 @@
 - name: Read messages from a kafka topic from RHACM
   hosts: all
+  execution_strategy: parallel
   sources:
     - ansible.eda.kafka:
         host: "{{ HOST }}"
