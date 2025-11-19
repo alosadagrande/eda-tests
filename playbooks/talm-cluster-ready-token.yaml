@@ -2,18 +2,45 @@
 # It extracts the token from the cluster and store it in the secret store.
 # It also deploys the emojivoto application to the cluster as action.
 # It handles both global hub and leaf hub scenarios.
+
+# This playbook uses inventory-based parallelism instead of loops for better concurrency.
+# First play: Creates inventory group 'target_clusters' from valid events
+# Second play: Processes clusters in parallel using forks over the inventory group
+
 - hosts: localhost
   connection: local
   vars:
+    # Only static, cheap variables here
     kubeconfig_file: "{{ ansible_env.HOME }}/.kube/config"
-    managedsa: "{{ managedsa_name | default('automation') }}"
-    # AAP Configuration (can be overridden)
     aap_organization: "{{ aap_org | default('Default') }}"
     aap_credential_type: "OpenShift or Kubernetes API Bearer Token"
-    
+    temp_base_dir: "/tmp/ansible-talm"
+    managedsa: "{{ managedsa_name | default('automation') }}"
+
   tasks:
-    - name: Process every result and extract the managedsa token
-      ansible.builtin.include_tasks: tasks/process_cluster_events_token.yaml
+    - name: Ensure temp directory exists (once)
+      ansible.builtin.file:
+        path: "{{ temp_base_dir }}"
+        state: directory
+        mode: '0700'
+      run_once: true
+        
+    - name: Create inventory group target_clusters from valid TALM events
+      ansible.builtin.add_host:
+        name: "{{ item.cguName }}"
+        groups: target_clusters
+        # Store event data in hostvars for use in the next play
+        # Note: name becomes inventory_hostname, so we can use that instead of storing cguName separately
+        leafHubName: "{{ item.leafHubName }}"
+        eventAnnotations: "{{ item.eventAnnotations }}"
+        eventNamespace: "{{ item.eventNamespace }}"
+        reason: "{{ item.reason }}"
+        # Pass global variables to each host
+        kubeconfig_file: "{{ kubeconfig_file }}"
+        aap_organization: "{{ aap_organization }}"
+        aap_credential_type: "{{ aap_credential_type }}"
+        temp_base_dir: "{{ temp_base_dir }}"
+        managedsa: "{{ managedsa }}"
       loop: "{{ ansible_eda.event.body }}"
       loop_control:
         label: "{{ item.cguName | default('invalid-event') }}"
@@ -23,4 +50,23 @@
         - item.eventAnnotations['cgu.openshift.io/cluster-name'] == item.cguName # Verifies that the key exists and compares
         - item.eventAnnotations['cgu.openshift.io/cluster-name'] is defined
         - item.eventNamespace == "ztp-install"
-        - item.reason == "CguSuccess" 
+        - item.reason == "CguSuccess"
+
+- hosts: target_clusters
+  connection: local
+  vars:
+    # Variables are already available from add_host in the previous play
+    # Event data from hostvars (set via add_host)
+    # inventory_hostname is the cluster name (set as 'name' in add_host)
+    cluster: "{{ inventory_hostname }}"
+    is_global_hub: "{{ leafHubName == 'local-cluster' }}"
+    cluster_safe_name: "{{ inventory_hostname | regex_replace('[^a-zA-Z0-9]', '-') }}"
+    leaf_hub_safe_name: "{{ leafHubName | regex_replace('[^a-zA-Z0-9]', '-') }}"
+    execution_id: "{{ ansible_date_time.epoch }}-{{ ansible_pid | default(99999) }}"
+    kubeconfig_cluster_output_path: "{{ temp_base_dir }}/cluster-{{ cluster_safe_name }}-{{ execution_id }}.yaml"
+    kubeconfig_leafhub_output_path: "{{ temp_base_dir }}/leaf-hub-{{ leaf_hub_safe_name }}-{{ execution_id }}.yaml"
+
+  tasks:
+    - name: Process cluster event  
+      ansible.builtin.include_tasks: tasks/process_cluster_events_token.yaml
+      

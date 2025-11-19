@@ -1,18 +1,17 @@
 # This file is used to extract the token from the cluster and store it in the secret store.
 # It also deploys the emojivoto application to the cluster as action.
 # It handles both global hub and leaf hub scenarios.
+#
+# This file now works with inventory-based parallelism.
+# Event data is accessed via hostvars instead of loop items.
+# Variables 'cluster' and 'is_global_hub' are already set in the parent playbook.
 
 - name: Log cluster provisioning success
   ansible.builtin.debug:
     msg: |
       TALM event received at {{ ansible_date_time.iso8601 }}:
-      Cluster {{ item.cguName }} managed by {{ item.leafHubName }} hub SUCCEEDED.
+      Cluster {{ cluster }} managed by {{ leafHubName }} hub SUCCEEDED.
       Cluster is ready for workloads.
-
-- name: Set cluster name
-  ansible.builtin.set_fact:
-    cluster: "{{ item.cguName }}"
-    is_global_hub: "{{ item.leafHubName == 'local-cluster' }}"
 
 # Handle Global Hub scenario
 - name: Get credentials from global hub
@@ -35,7 +34,7 @@
     - name: Get leaf hub credentials first
       ansible.builtin.include_tasks: get_cluster_credentials_token.yaml
       vars:
-        cluster_name: "{{ item.leafHubName }}"
+        cluster_name: "{{ leafHubName }}"
         
     - name: Set leaf hub credentials
       ansible.builtin.set_fact:
@@ -45,7 +44,7 @@
     - name: Create credential for leaf hub
       ansible.builtin.include_tasks: store_aap_credentials_token.yaml
       vars:
-        cred_cluster_name: "{{ item.leafHubName }}"
+        cred_cluster_name: "{{ leafHubName }}"
         cred_cluster_token: "{{ leaf_hub_token }}"
         cred_cluster_api: "{{ leaf_hub_api }}"
         
